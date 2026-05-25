@@ -191,10 +191,11 @@ Offload long-running I/O, heavy computations, or sequential workflows to backgro
 - `error?: string` — Error message if the task failed.
 
 #### Implementation Example
+
 ```javascript
 import { task, response } from "@titanpl/native";
 
-export function onSignup(req) {
+export default defineAction((req) => {
   // Send welcome email in background
   task.spawn(`welcome:${req.body.email}`, "send-welcome", {
     to: req.body.email,
@@ -202,8 +203,40 @@ export function onSignup(req) {
   });
 
   return response.json({ status: "Account created, email sending in background..." });
-}
+})
 
+```
+
+```javascript 
+import { defineTask, response, log, shareContext, fetch } from "@titanpl/native";
+
+export default defineTask((req) => {
+    const { userId = "anon", page = 1, label = "unnamed" } = req.body || {};
+
+    log(`[task-worker] Running — userId: ${userId}, page: ${page}, label: ${label}`);
+
+    // Simulate work: fetch a public API
+    const result = drift(fetch(`https://jsonplaceholder.typicode.com/posts/${page}`));
+    const post = JSON.parse(result.body);
+
+    // Store result in shareContext so the main request can read it
+    const cacheKey = `task-result:${userId}:${page}`;
+    shareContext.set(cacheKey, {
+        userId,
+        page,
+        label,
+        fetchedAt: Date.now(),
+        post
+    });
+
+    log(`[task-worker] Done — stored result at shareContext["${cacheKey}"]`);
+
+    return response.json({ ok: true, cacheKey });
+});
+
+```
+
+ ```javascript
 // Sequential Queue (FIFO)
 // Jobs in the same queue key run one after another, never in parallel.
 export function syncData(req) {

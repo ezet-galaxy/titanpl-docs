@@ -1,73 +1,385 @@
 ---
 title: 4. CLI Reference
-description: Master the Titan CLI to build, test, and deploy your native backend.
+description: The Titan CLI is the central toolchain for building, testing, compiling, and managing Titan Planet applications and extensions. It powers the entire Orbit + Gravity workflow from local development to production deployment.
 ---
 
-The Titan CLI is the central tool for managing your Titan Planet projects.
+import { Callout } from 'fumadocs-ui/components/callout';
 
 ## Installation
 
 ```bash
 npm install -g @titanpl/cli
-```
-
-import { Callout } from 'fumadocs-ui/components/callout';
+````
 
 <Callout type="info">
-  **Note:** `titan` is the canonical command. `tit` remains supported as an alias.
+  <strong>Note:</strong> <code>titan</code> is the canonical command.
+  <code>tit</code> remains supported as a deprecated alias for backward compatibility.
 </Callout>
 
 ---
 
-## Project Commands
+## Core Usage
 
-### `titan init <name>`
-Scaffolds a new Titan project.
-- **Interactive Prompts:** Choose between JavaScript (Standard) or Rust + JavaScript (Beta).
-- **Template selection:** Sets up the necessary structure and `package.json` configuration.
-
-### `titan dev`
-Starts the Titan development server with hot reload.
-- **Bundling:** Uses `esbuild` to bundle JavaScript actions.
-- **Compilation:** Compiles Rust code and the native server.
-- **Hot Reload:** Watches for file changes and restarts the orbit instantly.
-
-### `titan build`
-Compiles your application for production.
-- **`--release`**: Generates a self-contained production bundle in the `build/` directory, including the engine binary and pre-computed routes.
-
-### `titan update`
-Syncs and generates necessary native files and configurations.
-- **Migration**: Essential when enabling Rust Actions in an existing project.
-- **Core Sync**: Ensures your project's native wrapper matches your local CLI version.
-- **Automation**: Re-downloads and configures the native core based on your `package.json` settings.
+```bash
+titan <command> [options]
+```
 
 ---
 
-## Extension Commands
-
-### `titan create ext <name>`
-Scaffolds a new Titan extension in a subdirectory.
-- **Options**: Select between `js`, `wasm`, or `native` types.
-- **Structure**: Creates `titan.json`, along with the necessary boilerplate files for the selected type (e.g., `index.js`, Rust source, or WASM configuration).
-
-### `titan build ext`
-Compiles WASM or Native extensions for distribution.
-- **WASM**: Compiles Rust to `.wasm` (requires Rust toolchain).
-- **Native**: Compiles Rust/C++ to platform-specific binaries (.dll/.so).
-
-### `titan run ext`
-Runs the Extension Test Harness.
-- **Virtual Project:** Sets up a temporary Titan environment.
-- **Native Link:** Links your local native code to the test runner.
-- **Test Server:** Starts a server where you can verify your extension logic.
+# Project Commands
 
 ---
 
-## Help & Version
+## `titan init <project-name>`
 
-### `titan --help`
-Displays help information for all commands.
+Scaffolds a new Titan Planet application.
 
-### `titan --version`
-Displays the current version of the Titan CLI.
+### Features
+
+* Interactive project initialization
+* JavaScript or TypeScript templates
+* Hybrid Rust + JS architecture support
+* Automatic runtime configuration generation
+* Project structure bootstrapping
+
+### Options
+
+| Option           | Description                 |
+| ---------------- | --------------------------- |
+| `-t, --template` | Select application template |
+
+### Templates
+
+| Template  | Description                                          |
+| --------- | ---------------------------------------------------- |
+| `js`      | Standard JavaScript application                      |
+| `ts`      | Standard TypeScript application                      |
+| `rust-js` | Hybrid Rust + JavaScript architecture (Experimental) |
+| `rust-ts` | Hybrid Rust + TypeScript architecture (Experimental) |
+
+### Examples
+
+```bash
+titan init my-app
+titan init my-app -t ts
+titan init my-app -t rust-ts
+```
+
+Based on the CLI initializer help definitions.
+
+---
+
+## `titan dev`
+
+Starts the TitanPl development server with live rebuild and hot reload.
+
+### Features
+
+* Live Orbit router execution
+* Route and action watching
+* Automatic rebuild pipeline
+* Native server compilation
+* Instant hot reload
+* Gravity runtime synchronization
+
+### Internal Behavior
+
+* Bundles actions using `esbuild`
+* Watches `app/` for changes
+* Rebuilds native runtime automatically
+* Restarts the server instantly after updates
+
+### Example
+
+```bash
+titan dev
+```
+
+Defined in the CLI router as the primary development server command.
+
+---
+
+## `titan build`
+
+Compiles TitanPl applications into deployable server artifacts.
+
+### Features
+
+* Route precomputation
+* Server artifact generation
+* Packet bundling
+* Native engine packaging
+* Deployable binary preparation
+
+### Commands
+
+| Command                 | Description                      |
+| ----------------------- | -------------------------------- |
+| `titan build`           | Standard build pipeline          |
+| `titan build --release` | Fully optimized production build |
+| `titan build ext`       | Compile TitanPl extensions       |
+
+### Release Mode
+
+`--release` generates:
+
+* Optimized runtime binaries
+* Production-ready build output
+* Self-contained deployment artifacts
+* Precompiled route manifests
+
+### Examples
+
+```bash
+titan build
+titan build --release
+titan build ext
+```
+
+Build system behavior comes from the Packet Bundler help definitions and CLI router.
+
+---
+
+## `titan start`
+
+Launches a previously built TitanPl production server.
+
+### Features
+
+* Starts production Orbit router
+* Loads compiled Gravity artifacts
+* Executes prebuilt server binaries
+
+### Example
+
+```bash
+titan start
+```
+
+The command directly boots the production server from the existing build output.
+
+---
+
+## `titan run`
+
+Executes TitanPl servers.
+
+### Commands
+
+| Command         | Description                     |
+| --------------- | ------------------------------- |
+| `titan run`     | Run compiled production server  |
+| `titan run ext` | Launch extension sandbox server |
+
+### Sandbox Modes
+
+#### TitanPl Sandbox
+
+Minimal TitanPl server with extension injection support.
+
+#### TGRV Sandbox
+
+Standalone Gravity runtime execution environment.
+
+### Examples
+
+```bash
+titan run
+titan run ext
+```
+
+Runtime launcher definitions are provided by the run help module.
+
+---
+
+## `titan update`
+
+Synchronizes, migrates, and upgrades TitanPl projects across framework versions.
+
+### Features
+
+* Runtime migration
+* Template conversion
+* Native wrapper synchronization
+* Ecosystem validation
+* Extension verification
+* Configuration regeneration
+
+### Options
+
+| Option                | Description                           |
+| --------------------- | ------------------------------------- |
+| `--status`, `-s`      | Full ecosystem audit                  |
+| `--template <js\|ts>` | Convert application template language |
+
+### `--status` Includes
+
+* TitanPl package verification
+* Extension validation
+* Native binary inspection
+* Runtime compatibility checks
+* Marketplace registration validation
+
+### Template Conversion
+
+Automatically:
+
+* Updates `package.json`
+* Renames source files
+* Switches `jsconfig.json` ↔ `tsconfig.json`
+
+### Examples
+
+```bash
+titan update
+titan update --status
+titan update --template ts
+titan update --template js
+```
+
+### Notes
+
+* Only affects the `app/` directory
+* Ignores:
+
+  * `node_modules/`
+  * `dist/`
+  * `target/`
+  * `sandbox/`
+
+After updating packages:
+
+```bash
+npm install
+```
+
+Update system definitions come from the update help configuration.
+
+---
+
+# Extension Commands
+
+TitanPl extensions allow developers to extend the Gravity runtime using JavaScript, Rust, Go, or WebAssembly modules.
+
+---
+
+## `titan create ext <name>`
+
+Creates a new Titan extension package.
+
+### Supported Extension Types
+
+| Type     | Description                          |
+| -------- | ------------------------------------ |
+| `js`     | Pure JavaScript runtime extension    |
+| `native` | Rust native extension                |
+| `golang` | Go shared library extension          |
+| `wasm`   | WebAssembly extension (Experimental) |
+
+### Generated Structure
+
+```txt
+native/      → Native source code
+sandbox/     → Extension testing runtime
+titan.json   → Extension manifest
+index.js     → Runtime registration entrypoint
+```
+
+### Example
+
+```bash
+titan create ext my-ext
+```
+
+---
+
+## `titan build ext`
+
+Compiles extension runtime binaries.
+
+### Supported Targets
+
+* Rust native libraries
+* Go shared objects
+* WebAssembly modules
+
+### Outputs
+
+Platform-specific runtime binaries such as:
+
+* `.dll`
+* `.so`
+* `.dylib`
+* `.wasm`
+
+### Example
+
+```bash
+titan build ext
+```
+
+---
+
+## `titan run ext`
+
+Launches the Titan Extension Test Harness.
+
+### Features
+
+* Minimal TitanPl server
+* Isolated Gravity sandbox
+* Native extension injection
+* Runtime validation
+* Local extension linking
+
+### Sandbox Modes
+
+| Mode            | Description                |
+| --------------- | -------------------------- |
+| TitanPl Sandbox | Minimal TitanPl server     |
+| TGRV Sandbox    | Standalone Gravity runtime |
+
+### Example
+
+```bash
+titan run ext
+```
+
+Extension toolkit definitions come from the extension help module.
+
+---
+
+# Additional Commands
+
+---
+
+## `titan migrate`
+
+Runs TitanPl migration pipelines.
+
+### Purpose
+
+* Framework migrations
+* Runtime upgrades
+* Legacy compatibility conversion
+* Project structure evolution
+
+The command exists in the CLI router and executes internal migration workflows.
+
+---
+
+# Global Options
+
+| Option          | Description                    |
+| --------------- | ------------------------------ |
+| `-h, --help`    | Show help information          |
+| `-v, --version` | Show current Titan CLI version |
+
+### Examples
+
+```bash
+titan --help
+titan --version
+```
+
+CLI option routing is defined directly in the main command dispatcher.

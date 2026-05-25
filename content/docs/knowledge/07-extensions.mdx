@@ -1,57 +1,442 @@
 ---
 title: 07. Extension System
-description: Extend TitanPL with JavaScript, WebAssembly, or Native Rust/C++ modules for limitless performance and capability.
+description: Extend TitanPL with JavaScript, WebAssembly, Native Rust, Go, or C++ modules for limitless performance and runtime capability.
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
 
-TitanPL supports three distinct types of extensions to suit different performance and security needs. All extensions are registered on the global `t` object for seamless use in your JavaScript actions.
+TitanPL extensions allow developers to extend the Gravity runtime using JavaScript, Rust, Go, WebAssembly, and native system libraries.
+
+Extensions integrate directly into the Gravity runtime and become accessible globally through the `t` namespace or via explicit imports from that npm package.
+
+TitanPL supports multiple extension architectures optimized for different workloads, ranging from fully sandboxed JavaScript modules to high-performance native runtime integrations.
 
 ---
 
 ## 🚀 Extension Types
 
-### 1. JavaScript (JS-Only)
-- **Best for**: Standard utilities, helper functions, and non-blocking logic.
-- **Complexity**: Zero build step.
-- **Security**: Always safe, runs inside the V8 sandbox.
-- **How to Create**:
-  ```bash
-  titan create ext <name>
-  # Select 'js'
-  ```
-- **Structure**:
-  - `index.js`: Main logic.
-  - `titan.json`: Metadata.
-- **Registration**: Uses `utils/registerExtension.js` to safely attach to the global `t`.
+TitanPL currently supports four extension categories:
 
-### 2. WebAssembly (WASM)
-- **Best for**: Performance-critical algorithms, parsers, or portable Rust logic.
-- **Complexity**: Requires `titan build ext` (compiles Rust to `.wasm`).
-- **Security**: Sandboxed, requires `allowWasm: true` in `tanfig.json`.
-- **How to Create**:
-  ```bash
-  titan create ext <name>
-  # Select 'wasm'
-  ```
-- **Build**: `titan build ext` (requires Rust toolchain).
-
-### 3. Native (Rust/C++)
-- **Best for**: Direct OS access, high-performance database drivers, or hardware acceleration.
-- **Complexity**: Out-of-process execution for stability. Requires `titan build ext`.
-- **Security**: Hard-Blocked by default. Requires explicit listing in `tanfig.json`.
-- **How to Create**:
-  ```bash
-  titan create ext <name>
-  # Select 'native'
-  ```
-- **Build**: `titan build ext` (compiles to `.dll` or `.so`).
+| Type | Runtime | Performance | Sandbox | Build Step |
+|---|---|---|---|---|
+| JavaScript | V8 | Standard | Fully Sandboxed | No |
+| WASM | WebAssembly | High | Sandboxed (Experimental) | Yes |
+| Native | Rust/C++ | Maximum | Restricted | Yes |
+| Golang | Go Shared Object | High | Restricted | Yes |
 
 ---
 
-## 🛡️ Security Configuration (`tanfig.json`)
+# JavaScript Extensions
 
-To prevent unvetted code from running, TitanPL requires explicit permissions for non-JS extensions.
+## JS-Only Runtime Extensions
+
+JavaScript extensions run directly inside the Gravity V8 runtime.
+
+They are the simplest extension type and require no native compilation.
+
+### Best For
+
+- Utility libraries
+- Runtime helpers
+- Shared business logic
+- Middleware systems
+- Lightweight runtime APIs
+- Rapid prototyping
+
+### Security
+
+JavaScript extensions are fully sandboxed inside Gravity and are always allowed by default.
+
+### Create Extension
+
+```bash
+titan create ext my-ext
+````
+
+Then select: `
+js
+`
+
+---
+
+## Generated Structure
+
+```txt
+my-ext/
+├── index.js
+├── titan.json
+└── utils/
+    └── registerExtension.js
+```
+
+### Files
+
+| File                   | Purpose                                 |
+| ---------------------- | --------------------------------------- |
+| `index.js`             | Main extension entrypoint               |
+| `titan.json`           | Extension metadata and runtime manifest |
+| `registerExtension.js` | Safe runtime registration helper        |
+
+---
+
+## Runtime Registration
+
+JavaScript extensions register themselves onto the global `t` namespace.
+
+Example:
+
+```javascript
+import { registerExtension } from "./utils/registerExtension.js";
+
+
+registerExtension("mathx", {
+  add(a, b) {
+    return a + b;
+  }
+});
+```
+
+Usage:
+
+```javascript
+import Mathx from 'mathx'
+
+const mathx = new Mathx
+
+mathx.add(5, 2);
+```
+
+---
+
+## Official JS Template
+
+* [TitanPL JS Extension Template](https://github.com/t8nlab/extTemplate)
+
+---
+
+# WebAssembly Extensions (Experimental)
+
+## WASM Runtime Extensions
+
+WASM extensions allow Rust logic to run inside a portable sandboxed execution environment.
+
+TitanPL compiles Rust WASM modules into runtime-loadable `.wasm` artifacts.
+
+### Best For
+
+* Parsers
+* Compression systems
+* Cryptography
+* Data processing
+* Portable high-performance logic
+* CPU-heavy algorithms
+
+### Security
+
+WASM runs sandboxed and requires explicit permission inside `tanfig.json`.
+
+### Create Extension
+
+```bash
+titan create ext my-ext
+```
+
+Then select: `
+wasm `
+
+---
+
+## Build WASM Extension
+
+```bash
+titan build ext
+```
+
+Requires:
+
+* Rust toolchain
+* `wasm32-unknown-unknown` target
+
+---
+
+## Runtime Output
+
+```txt
+build/
+└── my-ext.wasm
+```
+
+---
+
+## Allow WASM Permissions inside `tanfig.json`
+
+```json
+{
+  "extensions": {
+    "allowWasm": true
+  }
+}
+```
+
+---
+
+## WASM Runtime Notes
+
+* Runs isolated from native memory
+* Portable across operating systems
+* Lower risk than native libraries
+* Automatically loaded by Gravity
+
+---
+
+# Native Extensions
+
+## Native Rust/C++ Extensions
+
+Native extensions provide direct access to operating system APIs and maximum runtime performance.
+
+TitanPL supports Rust native libraries and C++ runtime modules.
+
+### Best For
+
+* Database drivers
+* GPU acceleration
+* Networking engines
+* File system APIs
+* Native protocol bindings
+* Hardware integrations
+* Runtime accelerators
+
+### Security
+
+Native extensions are blocked by default.
+
+TitanPL enforces explicit allow-list security through `tanfig.json`.
+
+---
+
+## Create Native Extension
+
+```bash
+titan create ext my-native-ext
+```
+
+Then select: `
+native `
+
+---
+
+## Build Native Extension
+
+```bash
+titan build ext
+```
+
+Outputs:
+
+| Platform | Output   |
+| -------- | -------- |
+| Windows  | `.dll`   |
+| Linux    | `.so`    |
+| macOS    | `.dylib` |
+
+---
+
+## Native Permissions
+
+```json
+{
+  "extensions": {
+    "allowNative": [
+      "@titanpl/core",
+      "my-native-ext"
+    ]
+  }
+}
+```
+
+<Callout type="error">
+  <strong>Gravity Security Policy:</strong> TitanPL will trigger a HARD ERROR and refuse to start if any native extension is detected that is not explicitly allowed inside <code>tanfig.json</code>.
+</Callout>
+
+---
+
+## Gravity Runtime Architecture
+
+TitanPL executes native extensions outside the primary V8 isolate boundary for runtime stability and crash isolation.
+
+### Features
+
+* Native binary verification
+* Isolated execution layer
+* Runtime permission enforcement
+* Crash isolation
+* Extension manifest validation
+
+* [Learn more about security](/docs/knowledge/08-security)
+
+---
+
+## Official Native Rust Template
+
+* [TitanPL Native Rust Extension Template](https://github.com/t8nlab/titanpl/tree/main/templates/extension)
+
+---
+
+# Golang Extensions
+
+## Go Shared Library Extensions
+
+TitanPL supports Go shared-object extensions through runtime-loadable binaries.
+
+### Best For
+
+* Existing Go ecosystems
+* Networking tools
+* Concurrency-heavy systems
+* Performance utilities
+* Distributed tooling
+
+### Create Extension
+
+```bash
+titan create ext my-go-ext
+```
+
+Then select: `
+golang `
+
+---
+
+## Build Go Extension
+
+```bash
+titan build ext
+```
+
+Produces:
+
+```txt
+.dll / .so / .dylib
+```
+
+depending on the target platform.
+
+---
+
+## Official Golang Template
+
+* [TitanPL Golang Extension Template](https://github.com/t8nlab/golang-extTemplate?utm_source=chatgpt.com)
+
+---
+
+# Extension Commands
+
+TitanPL includes a complete extension lifecycle toolkit directly inside the CLI.
+
+---
+
+## `titan create ext <name>`
+
+Scaffolds a new TitanPL extension package.
+
+### Supported Extension Types
+
+| Type     | Description                       |
+| -------- | --------------------------------- |
+| `js`     | Pure JavaScript runtime extension |
+| `native` | Rust native extension             |
+| `golang` | Go shared library extension       |
+| `wasm`   | WebAssembly extension             |
+
+---
+
+### Generated Structure
+
+```txt
+native/      → Native source code
+sandbox/     → Extension testing runtime
+titan.json   → Extension manifest
+index.js     → Runtime registration entrypoint
+```
+
+---
+
+### Example
+
+```bash
+titan create ext my-ext
+```
+
+---
+
+## `titan build ext`
+
+Compiles extension runtime binaries.
+
+### Supported Targets
+
+* Rust native libraries
+* Go shared objects
+* WebAssembly modules
+
+### Outputs
+
+* `.dll`
+* `.so`
+* `.dylib`
+* `.wasm`
+
+---
+
+### Example
+
+```bash
+titan build ext
+```
+
+---
+
+## `titan run ext`
+
+Launches the Titan Extension Test Harness.
+
+### Features
+
+* Minimal TitanPL server
+* Isolated Gravity sandbox
+* Native extension injection
+* Runtime validation
+* Local extension linking
+* Temporary virtual TitanPl project
+* Standalone runtime execution
+
+---
+
+### Sandbox Modes
+
+| Mode            | Description                |
+| --------------- | -------------------------- |
+| TitanPL Sandbox | Minimal TitanPL server     |
+| TGRV Sandbox    | Standalone Gravity runtime |
+
+---
+
+### Example
+
+```bash
+titan run ext
+```
+
+---
+
+# Security Configuration
+
+## `tanfig.json`
+
+TitanPL uses explicit runtime permissions for all non-JavaScript extensions.
+
+Example:
 
 ```json
 {
@@ -66,34 +451,65 @@ To prevent unvetted code from running, TitanPL requires explicit permissions for
 }
 ```
 
-<Callout type="error">
-  **Gravity Policy:** The engine will trigger a **HARD ERROR** and refuse to start if any native extension is detected in `node_modules` or `.ext` that is not explicitly allowed.
-</Callout>
+---
+
+# Using Extensions
 
 ---
 
-## 🛠️ Usage in Actions
-
-Once an extension is loaded, it is available globally on the `t` object. You can also import specific components for better IDE support.
+## Typed Import Access
 
 ```javascript
-// app/actions/my-action.js
-import { log, crypto } from "@titanpl/native"; // Typed access
+import { log, defineAction } from "@titanpl/native";
+import "@titanpl/node/globals";
+import bcrypt from "bcryptjs";
+import Extension from "ext-template";
 
-export function myAction(req) {
-    // Both syntaxes work:
-    t.log("Extension is ready!");
-    log("Direct access also works!");
-    
-    return { status: "success" };
-}
+const demo = new Extension();
+
+export default defineAction((req) => {
+  log(demo.hash("hello"));
+})
 ```
 
 ---
 
-**Summary**
+# Extension Runtime Flow
 
-- Choose the right extension type (JS, WASM, or Native) based on your needs.
-- Use `titan create ext` to scaffold new extensions.
-- Explicitly authorize WASM and Native extensions in `tanfig.json`.
-- Access extensions via the global `t` object or specific imports.
+```txt
+Create Extension
+      ↓
+Build Extension
+      ↓
+Security Validation
+      ↓
+Runtime Registration
+      ↓
+Loaded into Gravity
+      ↓
+Accessible through t.* or JS import
+```
+
+---
+
+# Recommended Extension Strategy
+
+| Use Case                        | Recommended Type |
+| ------------------------------- | ---------------- |
+| Utilities                       | JS               |
+| High-performance portable logic | WASM             |
+| OS APIs / Drivers               | Native           |
+| Existing Go ecosystem           | Golang           |
+
+---
+
+# Summary
+
+* TitanPL supports JS, WASM, Native Rust/C++, and Golang extensions.
+* Extensions integrate directly into the Gravity runtime.
+* Use `titan create ext` to scaffold new extensions.
+* Use `titan build ext` to compile runtime binaries.
+* Use `titan run ext` to test extensions inside isolated sandboxes.
+* WASM and Native extensions require explicit runtime permissions.
+* Extensions become globally accessible through the `t` namespace or JS import.
+
